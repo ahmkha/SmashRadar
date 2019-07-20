@@ -5,6 +5,7 @@ INJECTED from C:\Users\Ahmed\SmashRad\android\app\src\main\AndroidManifest.xml:1
 INJECTED from C:\Users\Ahmed\SmashRad\android\app\src\main\AndroidManifest.xml:1:1-26:12
 INJECTED from C:\Users\Ahmed\SmashRad\android\app\src\main\AndroidManifest.xml:1:1-26:12
 MERGED from C:\Users\Ahmed\SmashRad\android\app\src\main\AndroidManifest.xml:1:1-26:12
+MERGED from [:react-native-gesture-handler] C:\Users\Ahmed\SmashRad\node_modules\react-native-gesture-handler\android\build\intermediates\library_manifest\debug\AndroidManifest.xml:2:1-11:12
 MERGED from [com.facebook.react:react-native:0.59.8] C:\Users\Ahmed\.gradle\caches\transforms-1\files-1.1\react-native-0.59.8.aar\f938e6c2ae84e6bd773ee2ec9b24a9f3\AndroidManifest.xml:2:1-13:12
 MERGED from [com.android.support:appcompat-v7:28.0.0] C:\Users\Ahmed\.gradle\caches\transforms-1\files-1.1\appcompat-v7-28.0.0.aar\433e551e24d13b840c0659547b0dc87d\AndroidManifest.xml:17:1-22:12
 MERGED from [com.android.support:support-fragment:28.0.0] C:\Users\Ahmed\.gradle\caches\transforms-1\files-1.1\support-fragment-28.0.0.aar\9b85e361bd1a56ad5d69afb19b3fec4f\AndroidManifest.xml:17:1-22:12
@@ -129,6 +130,8 @@ uses-sdk
 INJECTED from C:\Users\Ahmed\SmashRad\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\Ahmed\SmashRad\android\app\src\main\AndroidManifest.xml
 INJECTED from C:\Users\Ahmed\SmashRad\android\app\src\main\AndroidManifest.xml
+MERGED from [:react-native-gesture-handler] C:\Users\Ahmed\SmashRad\node_modules\react-native-gesture-handler\android\build\intermediates\library_manifest\debug\AndroidManifest.xml:7:5-9:41
+MERGED from [:react-native-gesture-handler] C:\Users\Ahmed\SmashRad\node_modules\react-native-gesture-handler\android\build\intermediates\library_manifest\debug\AndroidManifest.xml:7:5-9:41
 MERGED from [com.facebook.react:react-native:0.59.8] C:\Users\Ahmed\.gradle\caches\transforms-1\files-1.1\react-native-0.59.8.aar\f938e6c2ae84e6bd773ee2ec9b24a9f3\AndroidManifest.xml:7:5-9:41
 MERGED from [com.facebook.react:react-native:0.59.8] C:\Users\Ahmed\.gradle\caches\transforms-1\files-1.1\react-native-0.59.8.aar\f938e6c2ae84e6bd773ee2ec9b24a9f3\AndroidManifest.xml:7:5-9:41
 MERGED from [com.android.support:appcompat-v7:28.0.0] C:\Users\Ahmed\.gradle\caches\transforms-1\files-1.1\appcompat-v7-28.0.0.aar\433e551e24d13b840c0659547b0dc87d\AndroidManifest.xml:20:5-44
