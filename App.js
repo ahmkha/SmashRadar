@@ -42,7 +42,15 @@ class SignUpScreen extends React.Component {
           <HomeTextFields />
           <Button 
             title = "Register" 
+            onclick = {() =>fetch('http://localhost:8000/register/', {
+              method: 'POST',
+              body: JSON.stringify({
+                username: 'user',
+                password: 'pass',
+              }),
+            })} 
           />
+          <Text> </Text>
         </View>
       );
   }
