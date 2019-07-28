@@ -1,60 +1,169 @@
+// package main
+
+// import (
+// 	"database/sql"
+// 	"encoding/json"
+// 	"fmt"
+// 	"log"
+// 	"net/http"
+// 	"os"
+
+// 	"golang.org/x/crypto/bcrypt"
+
+// 	_ "github.com/lib/pq"
+// )
+
+// var db *sql.DB
+
+// //UserInfo is name and password combo
+// type UserInfo struct {
+// 	Username string `json:"username" db:"username"`
+// 	Password string `json:"password" db:"password"`
+// }
+
+// func main() {
+// 	http.HandleFunc("/login", loginHandler)
+// 	http.HandleFunc("/register", registerHandler)
+// 	initDB()
+// 	log.Fatal(http.ListenAndServe(getPort(), nil))
+// }
+
+// func loginHandler(w http.ResponseWriter, r *http.Request) {
+
+// }
+
+// func registerHandler(w http.ResponseWriter, r *http.Request) {
+// 	user := &UserInfo{}
+
+// 	request := json.NewDecoder(r.Body).Decode(user)
+
+// 	if request != nil {
+// 		w.WriteHeader(http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	safePass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 4)
+
+// 	if _, err = db.Query("INSERT INTO users VALUES ($1, $2)", user.Username, string(safePass)); err != nil {
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		fmt.Println(err)
+// 		return
+// 	}
+// }
+
+// func initDB() {
+// 	var err error
+// 	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
+
+// func getPort() string {
+// 	var port = os.Getenv("PORT")
+// 	if port == "" {
+// 		port = "8000"
+// 		fmt.Println("INFO: No PORT environment variable detected, defaulting to " + port)
+// 	}
+// 	return ":" + port
+// }
 package main
 
 import (
+	"bytes"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
-	"golang.org/x/crypto/bcrypt"
-
+	"github.com/gin-gonic/gin"
+	_ "github.com/heroku/x/hmetrics/onload"
 	_ "github.com/lib/pq"
+	"github.com/russross/blackfriday"
 )
 
-var db *sql.DB
+func repeatHandler(r int) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var buffer bytes.Buffer
+		for i := 0; i < r; i++ {
+			buffer.WriteString("Hello from Go!\n")
+		}
+		c.String(http.StatusOK, buffer.String())
+	}
+}
 
-//UserInfo is name and password combo
-type UserInfo struct {
-	Username string `json:"username" db:"username"`
-	Password string `json:"password" db:"password"`
+func dbFunc(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if _, err := db.Exec("CREATE TABLE IF NOT EXISTS ticks (tick timestamp)"); err != nil {
+			c.String(http.StatusInternalServerError,
+				fmt.Sprintf("Error creating database table: %q", err))
+			return
+		}
+
+		if _, err := db.Exec("INSERT INTO ticks VALUES (now())"); err != nil {
+			c.String(http.StatusInternalServerError,
+				fmt.Sprintf("Error incrementing tick: %q", err))
+			return
+		}
+
+		rows, err := db.Query("SELECT tick FROM ticks")
+		if err != nil {
+			c.String(http.StatusInternalServerError,
+				fmt.Sprintf("Error reading ticks: %q", err))
+			return
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var tick time.Time
+			if err := rows.Scan(&tick); err != nil {
+				c.String(http.StatusInternalServerError,
+					fmt.Sprintf("Error scanning ticks: %q", err))
+				return
+			}
+			c.String(http.StatusOK, fmt.Sprintf("Read from DB: %s\n", tick.String()))
+		}
+	}
 }
 
 func main() {
-	http.HandleFunc("/login", loginHandler)
-	http.HandleFunc("/register", registerHandler)
-	initDB()
-	log.Fatal(http.ListenAndServe(":8000", nil))
-}
+	port := os.Getenv("PORT")
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func registerHandler(w http.ResponseWriter, r *http.Request) {
-	user := &UserInfo{}
-
-	request := json.NewDecoder(r.Body).Decode(user)
-
-	if request != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	if port == "" {
+		log.Fatal("$PORT must be set")
 	}
 
-	safePass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 4)
-
-	if _, err = db.Query("INSERT INTO users VALUES ($1, $2)", user.Username, string(safePass)); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println(err)
-		return
-	}
-}
-
-func initDB() {
-	var err error
-	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	tStr := os.Getenv("REPEAT")
+	repeat, err := strconv.Atoi(tStr)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error converting $REPEAT to an int: %q - Using default\n", err)
+		repeat = 5
 	}
+
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatalf("Error opening database: %q", err)
+	}
+
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.LoadHTMLGlob("templates/*.tmpl.html")
+	router.Static("/static", "static")
+
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.tmpl.html", nil)
+	})
+
+	router.GET("/mark", func(c *gin.Context) {
+		c.String(http.StatusOK, string(blackfriday.Run([]byte("**hi!**"))))
+	})
+
+	router.GET("/repeat", repeatHandler(repeat))
+
+	router.GET("/db", dbFunc(db))
+
+	router.Run(":" + port)
 }
