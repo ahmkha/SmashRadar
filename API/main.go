@@ -1,169 +1,100 @@
-// package main
-
-// import (
-// 	"database/sql"
-// 	"encoding/json"
-// 	"fmt"
-// 	"log"
-// 	"net/http"
-// 	"os"
-
-// 	"golang.org/x/crypto/bcrypt"
-
-// 	_ "github.com/lib/pq"
-// )
-
-// var db *sql.DB
-
-// //UserInfo is name and password combo
-// type UserInfo struct {
-// 	Username string `json:"username" db:"username"`
-// 	Password string `json:"password" db:"password"`
-// }
-
-// func main() {
-// 	http.HandleFunc("/login", loginHandler)
-// 	http.HandleFunc("/register", registerHandler)
-// 	initDB()
-// 	log.Fatal(http.ListenAndServe(getPort(), nil))
-// }
-
-// func loginHandler(w http.ResponseWriter, r *http.Request) {
-
-// }
-
-// func registerHandler(w http.ResponseWriter, r *http.Request) {
-// 	user := &UserInfo{}
-
-// 	request := json.NewDecoder(r.Body).Decode(user)
-
-// 	if request != nil {
-// 		w.WriteHeader(http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	safePass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 4)
-
-// 	if _, err = db.Query("INSERT INTO users VALUES ($1, $2)", user.Username, string(safePass)); err != nil {
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		fmt.Println(err)
-// 		return
-// 	}
-// }
-
-// func initDB() {
-// 	var err error
-// 	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
-
-// func getPort() string {
-// 	var port = os.Getenv("PORT")
-// 	if port == "" {
-// 		port = "8000"
-// 		fmt.Println("INFO: No PORT environment variable detected, defaulting to " + port)
-// 	}
-// 	return ":" + port
-// }
 package main
 
 import (
-	"bytes"
+	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
-	"time"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/heroku/x/hmetrics/onload"
 	_ "github.com/lib/pq"
-	"github.com/russross/blackfriday"
+	"golang.org/x/crypto/bcrypt"
+	"googlemaps.github.io/maps"
 )
 
-func repeatHandler(r int) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var buffer bytes.Buffer
-		for i := 0; i < r; i++ {
-			buffer.WriteString("Hello from Go!\n")
-		}
-		c.String(http.StatusOK, buffer.String())
-	}
-}
+var db *sql.DB
 
-func dbFunc(db *sql.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if _, err := db.Exec("CREATE TABLE IF NOT EXISTS ticks (tick timestamp)"); err != nil {
-			c.String(http.StatusInternalServerError,
-				fmt.Sprintf("Error creating database table: %q", err))
-			return
-		}
-
-		if _, err := db.Exec("INSERT INTO ticks VALUES (now())"); err != nil {
-			c.String(http.StatusInternalServerError,
-				fmt.Sprintf("Error incrementing tick: %q", err))
-			return
-		}
-
-		rows, err := db.Query("SELECT tick FROM ticks")
-		if err != nil {
-			c.String(http.StatusInternalServerError,
-				fmt.Sprintf("Error reading ticks: %q", err))
-			return
-		}
-
-		defer rows.Close()
-		for rows.Next() {
-			var tick time.Time
-			if err := rows.Scan(&tick); err != nil {
-				c.String(http.StatusInternalServerError,
-					fmt.Sprintf("Error scanning ticks: %q", err))
-				return
-			}
-			c.String(http.StatusOK, fmt.Sprintf("Read from DB: %s\n", tick.String()))
-		}
-	}
+//UserInfo is name, password, and address combo
+type UserInfo struct {
+	Username string `json:"username" db:"username"`
+	Password string `json:"password" db:"password"`
+	Address  string `json:"address1"`
+	City     string `json:"city"`
+	State    string `json:"state"`
 }
 
 func main() {
-	port := os.Getenv("PORT")
+	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/register", registerHandler)
+	initDB()
+	log.Fatal(http.ListenAndServe(getPort(), nil))
+}
 
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Working or nah")
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	user := &UserInfo{}
+
+	request := json.NewDecoder(r.Body).Decode(user)
+
+	if request != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	safePass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 4)
+
+	userLocation := convertAddrToCoords(user.Address, user.City, user.State)
+
+	if _, err = db.Query("INSERT INTO userstest VALUES ($1, $2, POINT($3, $4))", user.Username, string(safePass), userLocation[0], userLocation[1]); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+}
+
+func convertAddrToCoords(addr, city, state string) []float64 {
+	client, err := maps.NewClient(maps.WithAPIKey("AIzaSyB4PNkMx4Z15K6y8GYfRfwbktDb1Da3DYY"))
+	if err != nil {
+		//return some error
+		log.Fatalf("No working mang :(")
+	}
+
+	addrString := addr + ", " + city + ", " + state
+	geocodeReq := &maps.GeocodingRequest{
+		Address: addrString,
+	}
+
+	coordinates, err := client.Geocode(context.Background(), geocodeReq)
+
+	if err != nil {
+		//return some error
+		log.Fatalf("No geocode mang :(")
+	}
+
+	coords := []float64{coordinates[0].Geometry.Location.Lat, coordinates[0].Geometry.Location.Lng}
+
+	return coords
+}
+
+func initDB() {
+	var err error
+	db, err = sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getPort() string {
+	var port = os.Getenv("PORT")
 	if port == "" {
-		log.Fatal("$PORT must be set")
+		port = "5000"
+		fmt.Println("INFO: No PORT environment variable detected, defaulting to " + port)
 	}
-
-	tStr := os.Getenv("REPEAT")
-	repeat, err := strconv.Atoi(tStr)
-	if err != nil {
-		log.Printf("Error converting $REPEAT to an int: %q - Using default\n", err)
-		repeat = 5
-	}
-
-	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil {
-		log.Fatalf("Error opening database: %q", err)
-	}
-
-	router := gin.New()
-	router.Use(gin.Logger())
-	router.LoadHTMLGlob("templates/*.tmpl.html")
-	router.Static("/static", "static")
-
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl.html", nil)
-	})
-
-	router.GET("/mark", func(c *gin.Context) {
-		c.String(http.StatusOK, string(blackfriday.Run([]byte("**hi!**"))))
-	})
-
-	router.GET("/repeat", repeatHandler(repeat))
-
-	router.GET("/db", dbFunc(db))
-
-	router.Run(":" + port)
+	return ":" + port
 }

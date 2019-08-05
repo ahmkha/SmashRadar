@@ -42,8 +42,12 @@ class SignUpScreen extends React.Component {
           <HomeTextFields />
           <Button 
             title = "Register" 
-            onclick = {() =>fetch('http://localhost:8000/register/', {
+            onclick = {() => fetch('https://aqueous-fortress-12378.herokuapp.com/register', {
               method: 'POST',
+              headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
               body: JSON.stringify({
                 username: 'user',
                 password: 'pass',

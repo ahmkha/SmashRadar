@@ -1,1 +1,1 @@
-web: API/main.go
+web: bin/SmashRadAPI
