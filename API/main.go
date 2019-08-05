@@ -59,7 +59,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func convertAddrToCoords(addr, city, state string) []float64 {
-	client, err := maps.NewClient(maps.WithAPIKey("AIzaSyB4PNkMx4Z15K6y8GYfRfwbktDb1Da3DYY"))
+	client, err := maps.NewClient(maps.WithAPIKey("apikey"))
 	if err != nil {
 		//return some error
 		log.Fatalf("No working mang :(")
