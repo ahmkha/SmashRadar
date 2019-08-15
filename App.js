@@ -1,25 +1,84 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, Image } from 'react-native';
+import { Alert, StyleSheet, Text, View, Button, Image, TextInput, FlatList } from 'react-native';
 import {createStackNavigator, createAppContainer} from 'react-navigation';
-import HomeTextFields from './components/HomeTextFields';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'; 
+import MultiList from './components/MainsList';
+
+//Images
+const image1 = require('../assets/banjo.png')
+const image2 = require('../assets/bayonetta.png')
+const image3 = require('../assets/bowser.png')
+const image4 = require('../assets/bowserjr.png')
+const image5 = require('../assets/captainfalcon.png')
+const image6 = require('../assets/chrom.png')
+const image7 = require('../assets/cloud.png')
+const image8 = require('../assets/corrin.png')
+const image9 = require('../assets/daisy.png')
+const image10 = require('../assets/darkpit.png')
+const image11 = require('../assets/darksamus.png')
+const image12 = require('../assets/dedede.png')
+const image13 = require('../assets/diddy.png')
+const image14 = require('../assets/dk.png')
+const image15 = require('../assets/drmario.png')
 
 class LoginScreen extends React.Component {
-  render() {
+  constructor(props) {
+    super(props);
+    this.state = {
+      username: '',
+      password: '',
+    };
+  }
 
+  handleLogin = () => {
+    request =  new Request('https://aqueous-fortress-12378.herokuapp.com/login', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: this.state.username,
+        password: this.state.password,
+      }),
+    });
+
+    fetch(request).then(response => {
+      if(response.status === 200){
+        this.props.navigation.navigate('Main');
+      }
+      else{
+        Alert.alert("Didn't work bro pls.");
+      }  
+    })
+  };
+
+  render() {
     return(
       <View style={styles.container}>
         <Image 
           source = {require('./assets/ssbu_logo.png')}
           style = {styles.logo_pic}
         />
-        <Text> Username: </Text>
-        <HomeTextFields />
-        <Text> Password: </Text>
-        <HomeTextFields />
+
+        <TextInput 
+          value = {this.state.username}
+          onChangeText = {(username) => {this.setState({username})}}
+          placeholder = "Username"
+          style={{borderColor: 'red', borderWidth: 1}}
+        />
+
+        <TextInput 
+          value = {this.state.password}
+          onChangeText = {(password) => {this.setState({password})}}
+          secureTextEntry={true}
+          placeholder = "Password"  
+          style = {{borderColor: 'red', borderWidth: 1}}        
+        />
+
         <Button 
           title = "Login" 
-          onPress = {() => this.props.navigation.navigate('Main')}
+          onPress = {this.handleLogin}
         />
         <Button 
           title = "Register" 
@@ -30,38 +89,96 @@ class LoginScreen extends React.Component {
   }
 }
 
-const request = new Request('https://aqueous-fortress-12378.herokuapp.com/register', {
-  method: 'POST',
-  headers: {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    username: 'test2',
-    password: 'testpass1',
-    address1: '2345 Foster Ave',
-    city: 'Brooklyn',
-    state: 'NY',
-  }),
-})
-
 class SignUpScreen extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      username: '',
+      password: '',
+      email: '',
+      address1: '',
+      city: '',
+      stateResidence: '',
+    };
+  }
+
+  handleRegister = () => {
+    request =  new Request('https://aqueous-fortress-12378.herokuapp.com/register', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: this.state.username,
+        password: this.state.password,
+        address1: this.state.address1,
+        city: this.state.city,
+        state: this.state.stateResidence,
+      }),
+    });
+
+    fetch(request).then(response => {
+      if(response.status === 200){
+        this.props.navigation.navigate('Login');
+      }
+      else{
+        Alert.alert("Didn't work bro pls.");
+      }  
+    })
+  };
+
   render() {
       return (
         <View>
-          <Text> Username: </Text>
-          <HomeTextFields />
-          <Text> Password: </Text>
-          <HomeTextFields />
-          <Text> E-mail Address: </Text>
-          <HomeTextFields />
-          <Text> Address: </Text>
-          <HomeTextFields />
+          <TextInput 
+            value = {this.state.username}
+            onChangeText = {(username) => {this.setState({username})}}
+            placeholder = "Username"
+            style={{borderColor: 'red', borderWidth: 1}}
+          />
+
+          <TextInput 
+            value = {this.state.password}
+            onChangeText = {(password) => {this.setState({password})}}
+            secureTextEntry={true}
+            placeholder = "Password"  
+            style = {{borderColor: 'red', borderWidth: 1}}        
+          />
+
+          <TextInput 
+            value = {this.state.address1}
+            onChangeText = {(address1) => {this.setState({address1})}}
+            placeholder = "Address Line 1" 
+            style = {{borderColor: 'red', borderWidth: 1}}         
+          />
+
+          <TextInput 
+            value = {this.state.city}
+            onChangeText = {(city) => {this.setState({city})}}
+            placeholder = "City"     
+            style = {{borderColor: 'red', borderWidth: 1}}     
+          />
+
+          <TextInput 
+            value = {this.state.stateResidence}
+            onChangeText = {(stateResidence) => {this.setState({stateResidence})}}
+            placeholder = "State"        
+            style = {{borderColor: 'red', borderWidth: 1}}  
+          />  
+          
+          <MultiList
+            data = {[{id: 'banjo', source: image1}, {id: 'bayonetta', source: image2},{id: 'bowser',source: image3},
+            {id: 'bowserjr', source: image4},{id: 'captainfalcon', source: image5},
+            {id: 'chrom', source: image6},{id: 'cloud', source: image7},{id: 'corrin', source: image8},
+            {id: 'daisy',source: image9},{id: 'darkpit', source: image10},
+            {id: 'darksamus', source: image11},{id: 'dedede', source: image12},{id: 'diddy', source: image13},
+            {id: 'dk', source: image14},{id: 'drmario', source: image15}]}
+          />       
+
           <Button 
             title = "Register" 
-            onPress = {() => fetch(request).then(response => {if(response.status === 200){
-              console.log(response.status);}
-            })} 
+            onPress = {this.handleRegister} 
           />
         </View>
       );
