@@ -1,25 +1,26 @@
 import React from 'react';
-import { Alert, StyleSheet, Text, View, Button, Image, TextInput, FlatList } from 'react-native';
+import { Alert, StyleSheet, ScrollView, View, Button, Image, TextInput } from 'react-native';
 import {createStackNavigator, createAppContainer} from 'react-navigation';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'; 
-import MultiList from './components/MainsList';
+import MainsList from './components/MainsList';
+import SetupList from './components/SetupList';
 
 //Images
-const image1 = require('../assets/banjo.png')
-const image2 = require('../assets/bayonetta.png')
-const image3 = require('../assets/bowser.png')
-const image4 = require('../assets/bowserjr.png')
-const image5 = require('../assets/captainfalcon.png')
-const image6 = require('../assets/chrom.png')
-const image7 = require('../assets/cloud.png')
-const image8 = require('../assets/corrin.png')
-const image9 = require('../assets/daisy.png')
-const image10 = require('../assets/darkpit.png')
-const image11 = require('../assets/darksamus.png')
-const image12 = require('../assets/dedede.png')
-const image13 = require('../assets/diddy.png')
-const image14 = require('../assets/dk.png')
-const image15 = require('../assets/drmario.png')
+const image1 = require('./assets/banjo.png')
+const image2 = require('./assets/bayonetta.png')
+const image3 = require('./assets/bowser.png')
+const image4 = require('./assets/bowserjr.png')
+const image5 = require('./assets/captainfalcon.png')
+const image6 = require('./assets/chrom.png')
+const image7 = require('./assets/cloud.png')
+const image8 = require('./assets/corrin.png')
+const image9 = require('./assets/daisy.png')
+const image10 = require('./assets/darkpit.png')
+const image11 = require('./assets/darksamus.png')
+const image12 = require('./assets/dedede.png')
+const image13 = require('./assets/diddy.png')
+const image14 = require('./assets/dk.png')
+const image15 = require('./assets/drmario.png')
 
 class LoginScreen extends React.Component {
   constructor(props) {
@@ -99,6 +100,8 @@ class SignUpScreen extends React.Component {
       address1: '',
       city: '',
       stateResidence: '',
+      mains: [],
+      setup: [],
     };
   }
 
@@ -115,6 +118,8 @@ class SignUpScreen extends React.Component {
         address1: this.state.address1,
         city: this.state.city,
         state: this.state.stateResidence,
+        mains: this.state.mains,
+        setup: this.state.setup,
       }),
     });
 
@@ -123,14 +128,14 @@ class SignUpScreen extends React.Component {
         this.props.navigation.navigate('Login');
       }
       else{
-        Alert.alert("Didn't work bro pls.");
+        Alert.alert("Didn't work bro pls. " + this.state.setup[1]);
       }  
     })
   };
 
   render() {
       return (
-        <View>
+        <ScrollView>
           <TextInput 
             value = {this.state.username}
             onChangeText = {(username) => {this.setState({username})}}
@@ -166,21 +171,32 @@ class SignUpScreen extends React.Component {
             placeholder = "State"        
             style = {{borderColor: 'red', borderWidth: 1}}  
           />  
-          
-          <MultiList
-            data = {[{id: 'banjo', source: image1}, {id: 'bayonetta', source: image2},{id: 'bowser',source: image3},
-            {id: 'bowserjr', source: image4},{id: 'captainfalcon', source: image5},
-            {id: 'chrom', source: image6},{id: 'cloud', source: image7},{id: 'corrin', source: image8},
-            {id: 'daisy',source: image9},{id: 'darkpit', source: image10},
-            {id: 'darksamus', source: image11},{id: 'dedede', source: image12},{id: 'diddy', source: image13},
-            {id: 'dk', source: image14},{id: 'drmario', source: image15}]}
-          />       
+
+          <View style = {{flex:1, alignItems: 'center',}}>
+            <MainsList
+              data = {[{id: 'banjo', source: image1}, {id: 'bayonetta', source: image2},{id: 'bowser',source: image3},
+              {id: 'bowserjr', source: image4},{id: 'captainfalcon', source: image5},
+              {id: 'chrom', source: image6},{id: 'cloud', source: image7},{id: 'corrin', source: image8},
+              {id: 'daisy',source: image9},{id: 'darkpit', source: image10},
+              {id: 'darksamus', source: image11},{id: 'dedede', source: image12},{id: 'diddy', source: image13},
+              {id: 'dk', source: image14},{id: 'drmario', source: image15}]}
+              setMains = {(mains) => {this.setState({mains})}}
+            />   
+          </View>    
+
+          <View style = {{flex:1, alignItems: 'center',}}>
+            <SetupList
+              data = {[{id: 'Gamecube Controller Adapter', title: 'Gamecube Controller Adapter'},
+              {id: 'Lan Adapter', title:'Lan Adapter'}, {id: '1 GC Controller', title: '1 GC Controller'}]}
+              setSetup = {(setup) => {this.setState({setup})}}
+            />   
+          </View> 
 
           <Button 
             title = "Register" 
             onPress = {this.handleRegister} 
           />
-        </View>
+        </ScrollView>
       );
   }
 }

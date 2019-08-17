@@ -1,6 +1,6 @@
-import React, { Component, TouchableOpacity, Text } from 'react';
+import React, { View, Component, TouchableOpacity, Text } from 'react';
 
-class ListItem extends Component{
+export default class TextListItem extends Component{
     _onPress = () => {
         this.props.onPressItem(this.props.id);
       };

@@ -1,11 +1,11 @@
 import React, {PureComponent} from 'react';
 import { FlatList, StyleSheet } from 'react-native';
-import ImageListItem from './ImageListItem';
+import SetupItemList from './SetupItemList';
 
-export default class MainsList extends PureComponent {
+export default class SetupList extends PureComponent {
   state = {
-    selected: (new Map()), //MAP<STRING, BOOLEAN>
-    selectedArr: [],    //STRING arr
+    selected: (new Map()),  //MAP<STRING, BOOLEAN>
+    selectedArr: [], //String arr
   }; 
 
   _keyExtractor = (item, index) => item.id;
@@ -23,17 +23,17 @@ export default class MainsList extends PureComponent {
         var index = selectedArr.indexOf(id);
         selectedArr.splice(index, 1);
       }
-      this.props.setMains(selectedArr);
+      this.props.setSetup(selectedArr);
       return {selected, selectedArr};
     });
   };
 
   _renderItem = ({item}) => (
-    <ImageListItem
+    <SetupItemList
       id={item.id}
       onPressItem={this._onPressItem}
       selected={!!this.state.selected.get(item.id)}
-      src={item.source}
+      title={item.title}
     />
   );
 
@@ -46,7 +46,6 @@ export default class MainsList extends PureComponent {
           extraData={this.state}
           keyExtractor={this._keyExtractor}
           renderItem={this._renderItem}
-          numColumns={3}
         />
     );
   }
@@ -57,3 +56,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   }
 });
+
