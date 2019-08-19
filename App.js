@@ -204,17 +204,33 @@ class SignUpScreen extends React.Component {
 class MainScreen extends React.Component{
     render(){
       return(
-        <View style={styles.containerMap}>
-          <MapView
-            provider={PROVIDER_GOOGLE} // remove if not using Google Maps
-            style={styles.map}
-            region={{
-              latitude: 37.78825,
-              longitude: -122.4324,
-              latitudeDelta: 0.015,
-              longitudeDelta: 0.0121,
-            }}
-     />
+        <View style = {{flex: 1}}>
+          <View>
+            <Button 
+              title = 'Quick Search'
+            />
+          </View>
+
+          <View style={styles.containerMap}> 
+            <MapView
+              provider={PROVIDER_GOOGLE} 
+              style={styles.map}
+              region={{
+                latitude: 37.78825,
+                longitude: -122.4324,
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.0121,
+              }}
+            />
+          </View>
+
+          <View style = {styles.navBarContainer}>
+            <Button title = 'Main'/>
+            <Button title = 'Profile'/>
+            <Button title = 'Session Test'/>
+            <Button title = 'Logout' />
+          </View>
+
         </View>
       );
     }
@@ -273,5 +289,15 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  navBarContainer: {
+    flexDirection: 'row',
+    flex: 1, 
+    justifyContent: 'space-between',
+    backgroundColor: '#29cff0',
+    position: 'absolute', 
+    left: 0, 
+    right: 0, 
+    bottom: 0,
   },
 });
