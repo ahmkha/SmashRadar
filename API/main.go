@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"strings"
@@ -36,13 +37,66 @@ type UserInfo struct {
 	Setup     []string `json:"setup" db:"setup"`
 }
 
+//SearchReq stores a user's search criteria
+type SearchReq struct {
+	Username string `json:"username"`
+	Distance int    `json:"distance"`
+}
+
+//UserInfoList is an array of User pointers for JSON encoding
+type UserInfoList []*UserInfo
+
 func main() {
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/register", registerHandler)
 	http.HandleFunc("/sessiontest", sessionHandler)
 	http.HandleFunc("/logout", logoutHandler)
+	http.HandleFunc("/quicksearch", quickSearchHandler)
 	initDB()
 	log.Fatal(http.ListenAndServe(getPort(), nil))
+}
+
+func quickSearchHandler(w http.ResponseWriter, r *http.Request) {
+	creds := &SearchReq{}
+
+	err := json.NewDecoder(r.Body).Decode(creds)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	session, err := store.Get(r, strings.ToLower(creds.Username))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	clientInfo := &UserInfo{
+		Username:  session.Values["Username"].(string),
+		Latitude:  session.Values["Lat"].(float64),
+		Longitude: session.Values["Long"].(float64),
+		Mains:     session.Values["Mains"].([]string),
+		Setup:     session.Values["Setup"].([]string)}
+
+	//might need more efficient algorithm to calculate all nearby folks
+	allUsers, err := db.Query("SELECT username, latitude, longitude, mains, setup FROM users WHERE username!=$1", strings.ToLower(creds.Username))
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	//slice of UserInfos
+	nearbyUsers := findNearbyUsers(allUsers, clientInfo, creds.Distance)
+
+	jsonResponse, err := json.Marshal(nearbyUsers)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +178,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	storedCreds := &UserInfo{}
 
-	//err = result.Scan(&storedCreds.Username, &storedCreds.Password, &storedCreds.Latitude, &storedCreds.Longitude, &storedCreds.Mains, &storedCreds.Setup)
 	err = result.Scan(&storedCreds.Password, &storedCreds.Latitude, &storedCreds.Longitude, &storedCreds.Username, pq.Array(&storedCreds.Mains), pq.Array(&storedCreds.Setup))
 	if err != nil {
 
@@ -222,3 +275,62 @@ func getPort() string {
 	}
 	return ":" + port
 }
+
+func findNearbyUsers(rows *sql.Rows, targetUser *UserInfo, distance int) UserInfoList {
+	validUsers := UserInfoList{}
+
+	for rows.Next() {
+		var singleUser = &UserInfo{}
+
+		err := rows.Scan(&singleUser.Username, &singleUser.Latitude, &singleUser.Longitude, pq.Array(&singleUser.Mains), pq.Array(&singleUser.Setup))
+
+		if err != nil {
+			return nil
+		}
+
+		//distance will be in miles
+		if calculateDistance(singleUser, targetUser) < float64(distance) {
+			validUsers = append(validUsers, singleUser)
+		}
+	}
+
+	return validUsers
+}
+
+func calculateDistance(user1 *UserInfo, user2 *UserInfo) float64 {
+	//haversine's formula
+	radius := float64(6371000) //earth's radius in meters
+	lat1 := user1.Latitude * math.Pi / 180
+	lat2 := user2.Latitude * math.Pi / 180
+	deltaLat := (user1.Latitude - user2.Latitude) * math.Pi / 180
+	deltaLong := (user1.Longitude - user2.Longitude) * math.Pi / 180
+
+	a := math.Sin(deltaLat/2)*math.Sin(deltaLat/2) + math.Cos(lat1)*math.Cos(lat2)*math.Sin(deltaLong/2)*math.Sin(deltaLong/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	distance := radius * c
+
+	//convert to miles
+	return distance / 1609.34
+}
+
+/*func getSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
+	//get user info to  check for identity
+	creds := &UserInfo{}
+
+	err := json.NewDecoder(r.Body).Decode(creds)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	//attempt to fetch the session from user info
+	session, err := store.Get(r, strings.ToLower(creds.Username))
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	return session
+}*/
